@@ -1,0 +1,100 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+def getVersionCode = { ->
+    try {
+        def code = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'rev-list', 'HEAD', '--first-parent', '--count'
+            standardOutput = code
+        }
+        return code.toString().trim().toInteger()
+    }
+    catch (error) {
+        logger.error("Error getting version code: %s", error)
+        return 0;
+    }
+}
+
+def getVersionName = { ->
+    try {
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'describe', '--dirty'
+            standardOutput = stdout
+        }
+        return stdout.toString().trim().substring(1)
+    }
+    catch (error) {
+        logger.error("Error getting version name: %s", error)
+        return null;
+    }
+}
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.3"
+
+    defaultConfig {
+        applicationId "app.ADICE"
+        minSdkVersion 21
+        targetSdkVersion 21
+        versionName getVersionName()
+        versionCode getVersionCode()
+        manifestPlaceholders = [HOCKEYAPP_APP_ID: "f5fc3d2b26a24cc699d65708e15870ee"]
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        debug {
+            versionNameSuffix "-DEBUG"
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    compileOptions.with {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+}
+buildscript {
+    ext.kotlin_version = '1.0.3'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+repositories {
+    mavenCentral()
+    jcenter()
+}
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile 'com.android.support:support-v4:23.4.0'
+    compile 'org.pcap4j:pcap4j-core:1.6.4'
+    compile 'org.pcap4j:pcap4j-packetfactory-propertiesbased:1.6.4'
+    compile 'org.slf4j:slf4j-android:1.7.21'
+    compile 'dnsjava:dnsjava:2.1.7'
+    compile 'net.hockeyapp.android:HockeySDK:4.0.1'
+    testCompile 'junit:junit:4.12'
+    testCompile 'com.nhaarman:mockito-kotlin:0.5.2'
+    testCompile 'org.robolectric:robolectric:3.1'
+    androidTestCompile 'com.android.support:support-annotations:23.4.0'
+    androidTestCompile 'com.android.support.test:runner:0.5'
+    androidTestCompile 'com.android.support.test:rules:0.5'
+    androidTestCompile 'com.android.support.test.uiautomator:uiautomator-v18:2.1.1'
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.1'
+}
